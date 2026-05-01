@@ -8,6 +8,15 @@ use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
+    // 1. ADD THIS: This handles GET /api/posts
+    public function index()
+    {
+        // "with('user')" ensures post.user.name works in Next.js
+        return response()->json(
+            Post::with('user')->latest()->get()
+        );
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -15,10 +24,14 @@ class PostController extends Controller
         ]);
 
         $post = Post::create([
-            'user_id' => Auth::id(), // This gets the ID from the Sanctum token
+            'user_id' => Auth::id(), 
             'caption' => $request->caption,
         ]);
 
-        return response()->json(['message' => 'Post created successfully', 'post' => $post], 201);
+        // Load the user relationship before returning so the UI can show it immediately
+        return response()->json([
+            'message' => 'Post created successfully', 
+            'post' => $post->load('user')
+        ], 201);
     }
 }
